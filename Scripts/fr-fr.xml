@@ -1,0 +1,42 @@
+<gs:GlobalizationServices xmlns:gs="urn:longhornGlobalizationUnattend">
+
+ <!--User List-->
+
+ <gs:UserList>
+  <gs:User UserID="Current"/>
+ </gs:UserList>
+
+<!--User Locale - This changes formats to French Canada -->
+ <gs:UserLocale>
+  <gs:Locale Name="fr-CA" SetAsCurrent="true"/>
+ </gs:UserLocale>
+
+ <gs:MUILanguagePreferences> 
+  <gs:MUILanguage Value="fr-FR" /> 
+ </gs:MUILanguagePreferences> 
+
+ <gs:InputPreferences>
+
+  <!--Add English US-->
+  <gs:InputLanguageID Action="add" ID="0409:00000409"/>
+  <!--Add canada Francais-->
+  <gs:InputLanguageID Action="add" ID="0c0c:00001009" Default="true" />
+  <!--Remove Canadian MultiLingual Standard -->
+  <gs:InputLanguageID Action="remove" ID="0c0c:00011009"/>
+  <gs:InputLanguageID Action="remove" ID="1009:00011009"/>
+  <!--Remove french legacy-->
+  <gs:InputLanguageID Action="remove" ID="0c0c:00000c0c"/>  
+  <!-- remove us Canada -->
+  <gs:InputLanguageID Action="remove" ID="1009:00000409"/>
+  <!-- Remove azerty france  -->
+  <gs:InputLanguageID Action="remove" ID="040c:0000040c"/> 
+ </gs:InputPreferences>
+
+ 
+ <!--location - Change location on Location tab to Canada: 39 US:244-->
+ <gs:LocationPreferences>
+  <gs:GeoID Value="39"/>
+ </gs:LocationPreferences>
+
+ 
+</gs:GlobalizationServices>
