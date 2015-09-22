@@ -359,35 +359,34 @@ switch ($step)
 
           "5e">($stepFile)
   
-
-
+  
      $char="%{F4}"
      if($vsProduct -eq "community") {
-       $char="{ESCAPE}"
+       $char="{ESCAPE}{ENTER}%{F4}{TAB}"
      }
+
+     Add-Type -AssemblyName System.Windows.Forms
+     Add-Type -AssemblyName Microsoft.VisualBasic
+
 
      start-process "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe" -ArgumentList "/resetSettings general.vssettings"
      start-sleep -Milliseconds 120000
      $proc= Get-Process -name devenv
      do {
-         [Microsoft.VisualBasic.Interaction]::AppActivate($proc[0].id)
-         start-sleep -Milliseconds 1500
-         [System.Windows.Forms.SendKeys]::SendWait($char)
-         start-sleep -Milliseconds 15000
-              "5g">($stepFile)
+        [Microsoft.VisualBasic.Interaction]::AppActivate($proc[0].id)
+        start-sleep -Milliseconds 1500
+        [System.Windows.Forms.SendKeys]::SendWait($char)
+        start-sleep -Milliseconds 15000
+        "5g">($stepFile)
   
      }
-     while (-not $proc.HasExited)
-           "5h">($stepFile)
-  
-
-
-     $isServer= (Gwmi  Win32_OperatingSystem).productType -gt 1
+     until ($proc.HasExited)
+     "5h">($stepFile)
+                       
      if (-not $isServer)
      {
         Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -Value 1
-           "5i">($stepFile)
-  
+           "5i">($stepFile)  
      }
  
        "5j">($stepFile)
