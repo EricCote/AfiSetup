@@ -25,9 +25,25 @@ function Download-File
     $wc.Dispose()
 }
 
+function Detect-ShiftKeyDown
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    return [System.Windows.Forms.Control]::ModifierKeys -eq "Shift"
+}
+
+
 function Get-ScriptPath
 {
-  return $MyInvocation.PSScriptRoot
+
+  if ($MyInvocation.PSScriptRoot) 
+  {
+     return $MyInvocation.PSScriptRoot
+  }
+  else
+  {
+    reuturn "c:\scripts"
+  }
+
 }
 
 
@@ -43,14 +59,15 @@ function Update-StoreApps
     [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
 }
 
-function Disable-IEESC{
+function Disable-IEESC
+{
     $AdminKey = “HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}”
     $UserKey = “HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}”
     Set-ItemProperty -Path $AdminKey -Name “IsInstalled” -Value 0
     Set-ItemProperty -Path $UserKey -Name “IsInstalled” -Value 0
 }
 
-
+function Install-MediaFeatures
 {
 #detect windows version for client
     if (-NOT $isserver)
@@ -122,15 +139,6 @@ function Set-AutoLogon
     }
 }
 
-function Show-Warning
-{
-    Write-Host "========================================================================================" -ForegroundColor Yellow
-    Write-Host "DO NOT INTERACT with this computer, unless the script is finished " -ForegroundColor Yellow
-    Write-Host "or there is an error message." -ForegroundColor Yellow
-    Write-Host "The computer will reboot a few times" -ForegroundColor Yellow
-    Write-Host "Thank you!" -ForegroundColor Yellow
-    Write-Host "=========================================================================================" -ForegroundColor Yellow
-}
 
 
 
@@ -256,8 +264,22 @@ function Install-VSExtension
 }
 
 
+function Show-Warning
+{
+    Write-Host "========================================================================================" -ForegroundColor Yellow
+    Write-Host "DO NOT INTERACT with this computer, unless the script is finished " -ForegroundColor Yellow
+    Write-Host "or there is an error message." -ForegroundColor Yellow
+    Write-Host "The computer will reboot a few times" -ForegroundColor Yellow
+    Write-Host "Thank you!" -ForegroundColor Yellow
+    Write-Host "=========================================================================================" -ForegroundColor Yellow
+}
 
-
+if (Detect-ShiftKeyDown)
+{
+   "bye!"
+    return 
+}
+ 
 switch ($step)
 {
 
@@ -282,8 +304,6 @@ switch ($step)
         #Put right time zone
         tzutil /s "Eastern Standard Time"
 
-        
-      
 
         #If windows client
         if (-NOT $isserver )
@@ -294,6 +314,8 @@ switch ($step)
             Update-StoreApps
         }
     
+        Install-MediaFeatures
+
      
   
         #check if Windows Update is configured for Application Updates (Microsoft updates)
