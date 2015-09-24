@@ -41,7 +41,7 @@ function Get-ScriptPath
   }
   else
   {
-    reuturn "c:\scripts"
+    return "c:\scripts"
   }
 
 }
@@ -190,11 +190,10 @@ function Set-LanguageAndKeyboard
         [ValidateSet("en-US.xml","fr-FR.xml","fr-CA.xml")] $fileName
     )
 
-    $confPath = Join-Path (Get-ScriptPath) $configurationLangueClavier
-    Start-Process control.exe -ArgumentList 'intl.cpl,, /f:"' + $confPath + '"'     
-
+    $confPath = Join-Path (Get-ScriptPath) $fileName
+    $arguments = 'intl.cpl,, /f:"' + $confPath + '"'
+    Start-Process control.exe -ArgumentList ($arguments)     
 }
-
 
 #Get VS Setup filepath exe  (ex: Vs_enterprise.exe or vs_community.exe) 
 function Get-VsSetupPath
@@ -313,7 +312,9 @@ switch ($step)
             #update the windows store
             Update-StoreApps
         }
-    
+
+
+        #install the media pack on Windows 10 N machines, and the media features on Windows Server
         Install-MediaFeatures
 
      
@@ -328,7 +329,7 @@ switch ($step)
 
 
         #run the script at next startup
-        Set-ItemProperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -name "myScript" -value ('powershell -ExecutionPolicy bypass -f "' +   (Get-ScriptPath)  + '"')
+        Set-ItemProperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -name "myScript" -value ('powershell -ExecutionPolicy bypass -f "' + (Join-Path (Get-ScriptPath) $MyInvocation.MyCommand.Name ) + '"')
            
         #set UAC off.
         if (-not $isServer)
@@ -464,12 +465,24 @@ switch ($step)
         Start-Process "msiexec" -ArgumentList ('/passive /i "' + $dl  + 'WebPlatformInstaller_amd64_en-US.msi"')  -Wait 
         
         #Install Vs2015AzurePack
-        Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\documents\azure.log" /AcceptEula') -wait
+        Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
         
         #Install TypeScript
-        Start-process $vssetup  -ArgumentList '/passive  /installselectableitems TypeScriptV2' -wait
-        Start-process $vssetup  -ArgumentList '/passive  /installselectableitems TypeScript /ChainingPackage VSNotificationHub' -wait
+        Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript' -wait
+        Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScriptV2' -wait
 
+        #Install Windows SDK 1.1
+        if(-not $isServer -and $OsVersion -eq 10)
+        {
+            Start-process $vssetup  -ArgumentList '/passive /AlternateResources WindowsExpress /Modify /InstallSelectableItems Windows10_ToolsAndSDK' -wait
+        }
+
+      
+        #Install Apache cordova tooling
+        if(-not $isServer)
+        {
+            Start-process $vssetup  -ArgumentList '/passive  /installselectableitems MDDJSCore' -wait
+        }
         
         "Install Keyboard"  
         Set-LanguageAndKeyboard "en-US.xml"    
@@ -551,10 +564,15 @@ switch ($step)
     }
     7
     {
-        "7">($stepFile) 
+
+         "8">($stepFile) 
         "Étape 7 terminé"
       
         break  
     }
 }
+
+
+
+
 

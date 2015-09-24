@@ -1,7 +1,7 @@
 @echo off
 if [%1]==[un]  goto uninstall
 
-"%userprofile%\downloads\opera_setup.exe" /install /runimmediately  /language=en-US /launchopera=0 /setdefaultbrowser=0 /startmenushortcut=1 /desktopshortcut=0 /quicklaunchshortcut=0 /pintotaskbar=0 /allusers=1 > null
+"%userprofile%\downloads\opera_setup.exe" /install /runimmediately  /language=en-US /launchopera=0 /setdefaultbrowser=0 /startmenushortcut=1 /desktopshortcut=0 /quicklaunchshortcut=0 /pintotaskbar=0 /allusers=1 > nul
 
 rem --with-feature:scheduled-autoupdate=0 
 
