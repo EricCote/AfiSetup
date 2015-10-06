@@ -12,6 +12,79 @@ $step=(get-content $stepfile)
 $OsVersion=[Environment]::OSVersion.Version.Major 
 $isServer= (Gwmi  Win32_OperatingSystem).productType -gt 1
 
+
+function Set-Background
+{
+
+    Param([parameter(Position=1)]
+      $NewColor
+    )
+
+        $code=@'
+          public const int SetDesktopWallpaper = 20;
+          public const int UpdateIniFile = 0x01;
+          public const int SendWinIniChange = 0x02;
+          public const int ColorDesktop = 1;
+
+          [DllImport("user32.dll")]
+          public static extern bool SetSysColors(int cElements, int[] lpaElements, int[] lpaRgbValues);
+
+          [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+          public static extern int SystemParametersInfo (int uAction, int uParam, string lpvParam, int fuWinIni);
+'@
+
+    add-type -Namespace Win32 -Name Desk -MemberDefinition  $code
+
+
+    $theColor=[System.Drawing.Color]::FromName($NewColor)
+
+    if ($theColor.ToArgb() -ne 0)
+    {
+        $oldWallpaper=Get-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "Wallpaper"
+        $oldBackground=    Get-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "Background"
+        
+        try{
+            $saved=Get-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "OldWallpaper" -ErrorAction SilentlyContinue
+        }
+        catch {
+            $saved=$null
+        }
+        if ($saved -eq $null){
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "OldWallpaper" -Value $oldWallpaper.Wallpaper
+            Set-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "OldBackground" -Value $oldBackground.Background
+        }
+
+        Set-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "Background" -Value ($theColor.R + " " + $theColor.G + " " +$theColor.B)
+        [Win32.Desk]::SystemParametersInfo([Win32.Desk]::SetDesktopWallpaper,0,"",[Win32.Desk]::UpdateIniFile -bor [Win32.Desk]::SendWinIniChange)
+
+        $myOperations= @([Win32.Desk]::ColorDesktop) 
+        $myColors=@([System.Drawing.ColorTranslator]::ToWin32([System.Drawing.Color]::FromName($NewColor)))
+        [Win32.Desk]::SetSysColors($myOperations.Length, $myOperations, $myColors)
+    }
+    else{
+        $oldWallpaper=$null
+        $oldWallpaper=Get-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "OldWallpaper" -ErrorAction SilentlyContinue
+        $oldBackground=Get-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "OldBackground" -ErrorAction SilentlyContinue
+        if ($oldWallpaper -eq $null){
+            return
+        }
+
+        Set-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "Background" -Value $oldBackground.OldBackground
+
+        $myOperations= @([Win32.Desk]::ColorDesktop) 
+        $myColors=@([System.Drawing.ColorTranslator]::ToWin32([System.Drawing.Color]::FromName($NewColor)))
+        [Win32.Desk]::SetSysColors($myOperations.Length, $myOperations, $myColors)
+            
+        [Win32.Desk]::SystemParametersInfo([Win32.Desk]::SetDesktopWallpaper,0,$oldWallpaper.OldWallpaper,[Win32.Desk]::UpdateIniFile -bor [Win32.Desk]::SendWinIniChange)
+
+        Remove-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "OldWallpaper" 
+        Remove-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "OldBackground"
+    }
+
+}
+
+
+
 function Download-File
 {
     Param([parameter(Position=1)]
