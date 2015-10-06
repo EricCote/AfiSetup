@@ -365,6 +365,7 @@ switch ($step)
         }
 
         Show-Warning
+        Set-Background "red"
 
        "installation du poste"
         #Disable the script execution policy for future scripts that are running 
@@ -630,6 +631,8 @@ switch ($step)
             #update the windows store
             Update-StoreApps
         }
+
+        Set-Background "restore"
     
         "Etapes terminees.  C'est fini!" 
         "7">($stepFile) 
