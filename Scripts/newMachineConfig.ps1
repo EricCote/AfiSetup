@@ -368,7 +368,7 @@ switch ($step)
 
        "installation du poste"
         #Disable the script execution policy for future scripts that are running 
-        Set-ExecutionPolicy bypass
+        Set-ExecutionPolicy bypass -Scope LocalMachine
     
         #Show hidden Files
         Set-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced HideFileExt "0"
