@@ -377,6 +377,18 @@ switch ($step)
         #Put right time zone
         tzutil /s "Eastern Standard Time"
 
+        #run the script at next startup
+        Set-ItemProperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -name "myScript" -value ('powershell -ExecutionPolicy bypass -f "' + (Join-Path (Get-ScriptPath) $MyInvocation.MyCommand.Name ) + '"')
+           
+        #set UAC off.
+        if (-not $isServer)
+        {
+            Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -Value 0
+        }
+        
+        #set registry entries to automatically log on 5 times
+        Set-AutoLogon -loginName '.\afi' -password 'afi12345!' -count 5 
+
 
         #If windows client
         if (-NOT $isserver )
@@ -384,7 +396,7 @@ switch ($step)
             #Disable defender until next reboot
             Set-MpPreference -DisableRealtimeMonitoring $true 
             #update the windows store
-            Update-StoreApps
+          #  Update-StoreApps
         }
 
 
@@ -400,20 +412,10 @@ switch ($step)
         ##install Windows Updates
         $cmd = Join-Path (Get-ScriptPath) Get-WindowsUpdates.ps1
         &($cmd) -Install -EulaAccept -verbose
-
-
-        #run the script at next startup
-        Set-ItemProperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -name "myScript" -value ('powershell -ExecutionPolicy bypass -f "' + (Join-Path (Get-ScriptPath) $MyInvocation.MyCommand.Name ) + '"')
+        
+        
+        shutdown -r -t 45
            
-        #set UAC off.
-        if (-not $isServer)
-        {
-            Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -Value 0
-        }
-        
-        #set registry entries to automatically log on 5 times
-        Set-AutoLogon -loginName '.\afi' -password 'afi12345!' -count 5 
-        
       
         "2">($stepFile)
 
