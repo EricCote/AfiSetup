@@ -138,6 +138,17 @@ function Disable-IEESC
     $UserKey = “HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}”
     Set-ItemProperty -Path $AdminKey -Name “IsInstalled” -Value 0
     Set-ItemProperty -Path $UserKey -Name “IsInstalled” -Value 0
+
+    Rundll32 iesetup.dll, IEHardenLMSettings
+    Rundll32 iesetup.dll, IEHardenUser
+    Rundll32 iesetup.dll, IEHardenAdmin
+    Rundll32 iesetup.dll, IEHardenMachineNow
+
+    start-sleep 3
+
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Internet Explorer\Main" -Name "First Home Page" -Value "http://www.google.ca/"
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Internet Explorer\Main" -Name "Start Page" -Value "http://www.google.ca/"
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Internet Explorer\Main" -Name "Default_Page_URL" -Value "http://www.google.ca/"
 }
 
 function Install-MediaFeatures
