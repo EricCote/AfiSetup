@@ -573,11 +573,11 @@ switch ($step)
         $cmd = Join-Path (Get-ScriptPath) get-browsers.ps1
         & $cmd      
         $cmd = Join-Path (Get-ScriptPath) chrome.cmd
-        & $cmd      
+        & $cmd $dl.Trimend('\')     
         $cmd = Join-Path (Get-ScriptPath) firefox.cmd
-        & $cmd      
+        & $cmd $dl.Trimend('\')    
         $cmd = Join-Path (Get-ScriptPath) opera.cmd
-        & $cmd      
+        & $cmd $dl.Trimend('\')   
           
   
         "install Taskbar shortcut"
