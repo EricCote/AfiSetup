@@ -8,10 +8,15 @@
      $wc = new-object System.Net.WebClient
      $wc.DownloadFile($fr,$dest + "fr_language_.xpi")
 
-     $document = Invoke-WebRequest $fireLink
-     $linkname=($document.Links | where innerText -like "Firefox*" | select -first 1).href
+     $document = Invoke-WebRequest $fireLink -UseBasicParsing
+     #$linkname=($document.Links | where innerText -like "Firefox*" | select -first 1).href
+     $linkname=($document.Links | where outerHTML -like "*Firefox Setup*" | where outerHTML -NotLike  "*Stub*" | select -last 1).href 
 
-     $wc.DownloadFile($fireLink + $linkName, $dest + ("firefox_Setup.exe"))   #[System.Web.HttpUtility]::UrlDecode($linkname)))
+     #$wc.DownloadFile($fireLink + $linkName, $dest + ("firefox_Setup.exe"))   #[System.Web.HttpUtility]::UrlDecode($linkname)))
+     "http://download.cdn.mozilla.net" + $linkName     $wc.DownloadFile("http://download.cdn.mozilla.net" + $linkName, $dest + ("firefox_Setup.exe"))  
+
+
+
 
      #----
      $chromelink = "http://dl.google.com/edgedl/chrome/install/GoogleChromeStandaloneEnterprise.msi" 
@@ -20,10 +25,11 @@
 
      #----
      $operaBase = "http://ftp.opera.com/ftp/pub/opera/desktop/" 
-     $document = Invoke-WebRequest $operaBase
+     $document = Invoke-WebRequest $operaBase -UseBasicParsing
      $linkname= $operaBase + ($document.Links | select -last 1 ).href + "win/" 
 
-     $document = Invoke-WebRequest $linkName
+
+     $document = Invoke-WebRequest $linkName -UseBasicParsing
      $filename =  ($document.Links | select -last 1).href
      $downlink= $linkname + $filename
 

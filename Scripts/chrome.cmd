@@ -1,8 +1,11 @@
-
 @echo off
-if [%1]==[un]  goto uninstall
 
-set prefs="%userprofile%\downloads\master_preferences.json" 
+SET dl=c:\dl
+
+IF [%1]==[un]  goto uninstall
+IF NOT [%1]==[] SET dl=%1
+
+set prefs="%dl%\master_preferences.json" 
 
 rem copy z:\installcmd\ChromeGpt.ini c:\windows\system32\GroupPolicy\gpt.ini /y
 rem md c:\windows\system32\GroupPolicy\Machine
@@ -13,6 +16,8 @@ rem GpUpdate.exe
 
 echo { > %prefs%
 echo  "browser": {"check_default_browser": false}, >> %prefs%
+echo  "homepage" : "http://www.afiexpertise.com", >> %prefs%
+echo  "homepage_is_newtabpage" : false, >> %prefs%
 echo  "sync_promo" : {"show_on_first_run_allowed": false,  "user_skipped": true}, >> %prefs%
 echo  "show-first-run-bubble-option": 1,  >> %prefs%
 echo  "distribution" : { >> %prefs%
@@ -33,6 +38,8 @@ echo    "verbose_logging":true >> %prefs%
 echo  } >> %prefs%
 echo } >> %prefs%
 
+
+
 md "c:\program files (x86)\Google"
 md "c:\program files (x86)\Google\Chrome"
 md "c:\program files (x86)\Google\Chrome\Application"
@@ -43,7 +50,7 @@ IF %processor_architecture%==x86 (
   copy %prefs% "c:\program files (x86)\Google\Chrome\Application\master_preferences" /y
 )
 
-msiexec /i "%userprofile%\downloads\googleChrome_setup.msi"   /passive
+msiexec /i "%dl%\googleChrome_setup.msi"   /passive
 
 IF %processor_architecture%==x86 (
   copy %prefs% "c:\program files\Google\Chrome\Application\master_preferences" /y
@@ -62,11 +69,14 @@ goto :eof
 
 :uninstall
 
-MsiExec.exe /X "%userprofile%\downloads\googleChrome_setup.msi" /passive
+if NOT [%2]==[] SET dl=%2
+MsiExec.exe /X "%dl%\googleChrome_setup.msi" /passive
 IF EXIST "%AppData%\google" rd "%AppData%\google"   /s /q
 IF EXIST "%AppData%\..\local\google" rd "%AppData%\..\local\google"   /s /q
 IF EXIST "c:\program files\Google" rd "c:\program files\Google" /s /q
 IF EXIST "c:\program files (x86)\Google" rd "c:\program files (x86)\Google" /s /q
+
+
 
 
 

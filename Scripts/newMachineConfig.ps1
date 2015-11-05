@@ -520,6 +520,7 @@ switch ($step)
         #  2XNFG-KFHR8-QV3CP-3W6HT-683CH 07060 
         #  HM6NR-QXX7C-DFW2Y-8B82K-WTYJV 07060 
         #  HMGNV-WCYXV-X7G9W-YCX63-B98R2 07062 
+        #  WXN74-VRMXH-J8X3H-M8F7W-CPQB8  community?
 
         
         
@@ -554,18 +555,11 @@ switch ($step)
         #Install Vs2015AzurePack
         Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
         
-        #Install TypeScript
-        Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript' -wait
-        Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScriptV2' -wait
+        #Install TypeScript, git for windows, github VS
+        Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript;GitForWindows;GitHubVS;PowerShellTools' -wait
 
-        #Install Windows SDK 1.1
-        if(-not $isServer -and $OsVersion -eq 10)
-        {
-            Start-process $vssetup  -ArgumentList '/passive /AlternateResources WindowsExpress /Modify /InstallSelectableItems Windows10_ToolsAndSDK' -wait
-        }
 
-      
-        #Install Apache cordova tooling
+        #Install Apache cordova tooling (includes windows sdk 1.1, ant, git for windows, nodejs, android emulator, web socket and web tools)
         if(-not $isServer)
         {
             Start-process $vssetup  -ArgumentList '/passive  /installselectableitems MDDJSCore' -wait
@@ -587,7 +581,7 @@ switch ($step)
           
   
         "install Taskbar shortcut"
-        #does not work beacause of a bug in windows 10
+        #does not work because of a bug in windows 10
         $shell = new-object -com "Shell.Application"  
         $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} Google\Chrome\Application ))
         $item = $folder.Parsename('chrome.exe')

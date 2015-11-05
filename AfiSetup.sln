@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "demo4", "demo4\demo4.csproj", "{D4AB9A86-5F6A-4915-B49C-A2F931958D28}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "afiSetup", "afiSetup\afiSetup.csproj", "{D4AB9A86-5F6A-4915-B49C-A2F931958D28}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PublishScripts", "PublishScripts", "{63E3DA67-1AE3-4095-8399-9658832F0AD1}"
 EndProject
