@@ -78,5 +78,3 @@ IF EXIST "c:\program files (x86)\Google" rd "c:\program files (x86)\Google" /s /
 
 
 
-
-
