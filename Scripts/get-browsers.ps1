@@ -1,4 +1,9 @@
-$dest="c:\dl\"
+[CmdletBinding()]
+Param
+    (
+    [string]$dest ="c:\dl\"
+
+    )
       
    
       if (-not (test-path $dest)) {  md $dest }

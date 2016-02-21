@@ -9,6 +9,7 @@ If (!(Test-Path $stepFile)){
 
 $step=(get-content $stepfile)
 
+$BuildVersion=[Environment]::OSVersion.Version.Build
 $OsVersion=[Environment]::OSVersion.Version.Major 
 $isServer= (Gwmi  Win32_OperatingSystem).productType -gt 1
 
@@ -161,18 +162,25 @@ function Install-MediaFeatures
 
 
         #detect if windows media playback is not installed
-        if ($HasMedia -ne 'Enabled' -and $OsVersion -eq 10)
+        if ($HasMedia -ne 'Enabled' -and $OsVersion -eq 10 )
         {
+            $url="https://download.microsoft.com/download/B/E/3/BE302763-5BFD-4209-9C98-02DF5B2DB452/KB3099229_x64.msu"
+           
+            if ($BuildVersion -lt 10586) 
+            {
+               $url="http://download.microsoft.com/download/7/F/2/7F2E00A7-F071-41CA-A35B-00DC536D4227/Windows10-KB3010081-x64.msu"
+            }
+            
             "Downloading Media Pack...."
             #Download Media feature pack
-            Download-file "http://download.microsoft.com/download/7/F/2/7F2E00A7-F071-41CA-A35B-00DC536D4227/Windows10-KB3010081-x64.msu" `
-                            ( $dl + "Windows10-KB3010081-x64.msu") 
+            Download-file $url  ( $dl + "Win-Media-Pack.msu") 
                 
             "Installing Media Pack"
             #install Media feature pack
-            $wusaArgs =  '"' + $dl + '\Windows10-KB3010081-x64.msu" /quiet /norestart'
+            $wusaArgs =  '"' + $dl + 'Win-Media-Pack.msu" /quiet /norestart'
             Start-Process wusa.exe -ArgumentList $wusaArgs -Wait
         }
+
     }
     else #is windows server
     {
@@ -230,9 +238,14 @@ function Install-FrenchLanguagePack
 {
     $LanguagePackSource=""
 
-    if (-NOT $isserver -and $OsVersion -eq 10)
+    if (-NOT $isserver -and $OsVersion -eq 10 )
     {             
-        $LanguagePackSource = "http://download.windowsupdate.com/d/msdownload/update/software/updt/2015/07/lp_8f6e1d4cb3972edef76030b917020b7ee6cf6582.cab"
+        $LanguagePackSource = "http://download.windowsupdate.com/d/msdownload/update/software/updt/2015/11/lp_7f834b68030b2e216d529c565305ea0ee8bb2489.cab"
+        
+        if ($BuildVersion -lt 10586)
+        {
+            $LanguagePackSource = "http://download.windowsupdate.com/d/msdownload/update/software/updt/2015/07/lp_8f6e1d4cb3972edef76030b917020b7ee6cf6582.cab"
+        }
     }
        
     if ($isServer -and $OsVersion -lt 10)
@@ -424,9 +437,7 @@ switch ($step)
         $cmd = Join-Path (Get-ScriptPath) Get-WindowsUpdates.ps1
         &($cmd) -Install -EulaAccept -verbose
         
-        
-        shutdown -r -t 45
-           
+
       
         "2">($stepFile)
 
