@@ -15,7 +15,7 @@ rem GpUpdate.exe
 
 
 echo { > %prefs%
-echo  "browser": {"check_default_browser": false}, >> %prefs%
+echo  "browser": {"check_default_browser": false, "should_reset_check_default_browser": false}, >> %prefs%
 echo  "homepage" : "http://www.afiexpertise.com", >> %prefs%
 echo  "homepage_is_newtabpage" : false, >> %prefs%
 echo  "sync_promo" : {"show_on_first_run_allowed": false,  "user_skipped": true}, >> %prefs%
@@ -60,9 +60,9 @@ IF %processor_architecture%==x86 (
 
 ::Manage Links
 del "C:\Users\Public\Desktop\*chrome*.lnk"
-move "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Google Chrome\Google Chrome.lnk" "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\"
-IF EXIST "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Google Chrome" rd /s /q "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Google Chrome"
-IF EXIST "%userprofile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Google Chrome" rd /s /q "%userprofile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Google Chrome"
+::move "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Google Chrome\Google Chrome.lnk" "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\"
+::IF EXIST "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Google Chrome" rd /s /q "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Google Chrome"
+::IF EXIST "%userprofile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Google Chrome" rd /s /q "%userprofile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Google Chrome"
 
 
 goto :eof

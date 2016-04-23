@@ -115,7 +115,8 @@ function Get-ScriptPath
   }
   else
   {
-    return "c:\scripts"
+    #return "c:\scripts"
+    return "C:\Users\afi\Source\Repos\AfiSetup\Scripts"
   }
 
 }
@@ -539,22 +540,22 @@ switch ($step)
         Initialize-IE
          
         #get Nuget  (TODO: this will fail when the new version of nuget comes along. We need something better.)
-        Install-VSExtension "https://visualstudiogallery.msdn.microsoft.com/5d345edc-2e2d-4a9c-b73b-d53956dc458d/file/146283/7/NuGet.Tools.vsix"
+      ##  Install-VSExtension "https://visualstudiogallery.msdn.microsoft.com/5d345edc-2e2d-4a9c-b73b-d53956dc458d/file/146283/7/NuGet.Tools.vsix"
 
         #get "microsoft Azure Storage Connected Service"
-        Install-VSExtension "https://visualstudiogallery.msdn.microsoft.com/c5f89a45-6549-4081-96dc-a76a461560bc/file/169224/2/Microsoft.VisualStudio.ConnectedServices.Azure.Storage.vsix" 
+      ##  Install-VSExtension "https://visualstudiogallery.msdn.microsoft.com/c5f89a45-6549-4081-96dc-a76a461560bc/file/169224/2/Microsoft.VisualStudio.ConnectedServices.Azure.Storage.vsix" 
                 
     
         #get ssdt july 2015  (TODO: this will fail when the new version of ssdt comes along. We need something better.   
-        Download-File "http://download.microsoft.com/download/4/D/3/4D39DA54-DF09-4628-B63D-685BFCE523EA/Dev14/EN/SSDTSetup.exe" `
-                       ( $dl + "SSDTSetup.exe" )
+     ##   Download-File "http://download.microsoft.com/download/4/D/3/4D39DA54-DF09-4628-B63D-685BFCE523EA/Dev14/EN/SSDTSetup.exe" `
+     ##                  ( $dl + "SSDTSetup.exe" )
    
 
         #get preview ssdt august 2015  (TODO: this will fail when the new version of ssdt comes along. We need something better.)
     
         #  Download-File "http://download.microsoft.com/download/C/B/D/CBD43835-E41E-4A4C-B040-664B8E6FB5B7/EN/SSDTSetup.exe" `
         #                ( $dl + "SSDTSetup.exe" ) 
-        Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('/passive /promptrestart')  -Wait 
+       ## Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('/passive /promptrestart')  -Wait 
 
 
         #Download WebPI
@@ -564,27 +565,27 @@ switch ($step)
         Start-Process "msiexec" -ArgumentList ('/passive /i "' + $dl  + 'WebPlatformInstaller_amd64_en-US.msi"')  -Wait 
         
         #Install Vs2015AzurePack
-        Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
+     ##   Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
         
         #Install TypeScript, git for windows, github VS
-        Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript;GitForWindows;GitHubVS;PowerShellTools' -wait
+     ##   Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript;GitForWindows;GitHubVS;PowerShellTools' -wait
 
 
         #Install Apache cordova tooling (includes windows sdk 1.1, ant, git for windows, nodejs, android emulator, web socket and web tools)
-        if(-not $isServer)
-        {
-            Start-process $vssetup  -ArgumentList '/passive  /installselectableitems MDDJSCore' -wait
-        }
+     ##   if(-not $isServer)
+     ##   {
+     ##       Start-process $vssetup  -ArgumentList '/passive  /installselectableitems MDDJSCore' -wait
+     ##   }
         
         "Install Keyboard"  
         Set-LanguageAndKeyboard "en-US.xml"    
           
-  
+
         "Install Browsers"
         $cmd = Join-Path (Get-ScriptPath) get-browsers.ps1
-        & $cmd      
+        & $cmd $dl  
         $cmd = Join-Path (Get-ScriptPath) chrome.cmd
-        & $cmd $dl.Trimend('\')     
+        & $cmd $dl.Trimend('\')
         $cmd = Join-Path (Get-ScriptPath) firefox.cmd
         & $cmd $dl.Trimend('\')    
         $cmd = Join-Path (Get-ScriptPath) opera.cmd
