@@ -357,7 +357,7 @@ function Install-VSExtension
         [System.Windows.Forms.SendKeys]::SendWait($char)
         start-sleep -Milliseconds 15000
     }
-    until ($proc.HasExited)
+    until ($proc[0].HasExited)
 }
 
 

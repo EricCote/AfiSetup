@@ -75,3 +75,22 @@ WITH
 
 &  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
 
+del (Join-path $dl  "Adventure Works 2014 Full Database Backup.zip")
+del (Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip")
+
+
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName Microsoft.VisualBasic
+
+$edge= Get-Process -name microsoftEdge
+do {
+    [Microsoft.VisualBasic.Interaction]::AppActivate("edge")
+    start-sleep -Milliseconds 1500
+    [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
+    start-sleep -Milliseconds 700
+    [System.Windows.Forms.SendKeys]::SendWait("~")
+    start-sleep -Milliseconds 3000
+}
+until ($edge[0].HasExited)
+
