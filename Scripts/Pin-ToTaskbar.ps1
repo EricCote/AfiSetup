@@ -17,7 +17,7 @@
 #Takes 2 seconds to add a pinned program
 
 #Should NEVER use on an already pinned program
-#There is no way for this program to  detect that a program is already pinned.
+#There is no way for this function to  detect that an app is already pinned.
 
 #if an app is already pinned when we run, it will either:
 #a. pin it to start menu

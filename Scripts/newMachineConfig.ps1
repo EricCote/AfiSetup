@@ -116,7 +116,7 @@ function Get-ScriptPath
   else
   {
     #return "c:\scripts"
-    return "C:\Users\afi\Source\Repos\AfiSetup\Scripts"
+    return "C:\demo\AfiSetup\Scripts"
   }
 
 }
@@ -296,9 +296,16 @@ function Set-LanguageAndKeyboard
 #Get VS Setup filepath exe  (ex: Vs_enterprise.exe or vs_community.exe) 
 function Get-VsSetupPath
 {
-    $result = dir -Path "C:\ProgramData\Package Cache\" -Name "vs_*.exe" -Exclude "vs_*[ps].exe" -Recurse
-    return  ("C:\ProgramData\Package Cache\" + $result)
+    $result = Get-ChildItem -ErrorAction Ignore -Path "C:\ProgramData\Package Cache\" -Name "vs_*.exe" -Exclude "vs_*[psk].exe" -Recurse
+    if ($result -eq $null) 
+    {
+       return $null
+    } else
+    {
+        return  get-ChildItem -Path  (join-path "C:\ProgramData\Package Cache\" $result ) 
+    }
 }
+
 
 function Initialize-IE 
 {
@@ -321,6 +328,43 @@ function Initialize-IE
 }
 
 
+#Issues:
+#Takes 2 seconds to add a pinned program
+
+#Should NEVER use on an already pinned program
+#There is no way for this function to  detect that an app is already pinned.
+
+#if an app is already pinned when we run, it will either:
+#a. pin it to start menu
+#b. unpin it from the taskbar if it's already on the start menu.
+
+function Pin-ToTaskbar
+{   
+    param 
+    (
+        [parameter(position=1,mandatory=$true)] $appName
+    )   
+
+    Add-Type -AssemblyName System.Windows.Forms
+
+    
+    [System.Windows.Forms.SendKeys]::SendWait("^{ESC}") # Ctrl-Esc to call start menu 
+    start-sleep -Milliseconds 200
+    [System.Windows.Forms.SendKeys]::SendWait($appname) # type app name 
+    start-sleep -Milliseconds 300
+    [System.Windows.Forms.SendKeys]::SendWait("+{F10}")  # Shift-F10 to call right-click menu
+    start-sleep -Milliseconds 200
+    [System.Windows.Forms.SendKeys]::SendWait("{DOWN}{DOWN}{DOWN}{DOWN}") # down 4 times,
+    [System.Windows.Forms.SendKeys]::SendWait("{ENTER}") # enter
+    [System.Windows.Forms.SendKeys]::SendWait("{ESC}") # escape
+}
+
+
+
+
+
+
+
 function Install-VSExtension 
 {
     param
@@ -339,25 +383,29 @@ function Install-VSExtension
 
  function Initialize-VisualStudio     
 {
-    $char="%{F4}"
-    if($vsProduct -eq "community") {
-    $char="{ESCAPE}{ENTER}%{F4}{TAB}"
+
+    if (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe")
+    {
+        $char="%{F4}"
+        if($vsProduct -eq "community") {
+        $char="{ESCAPE}{ENTER}%{F4}{TAB}"
+        }
+
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName Microsoft.VisualBasic
+
+
+        start-process "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe" -ArgumentList "/resetSettings general.vssettings"
+        start-sleep -Milliseconds 120000
+        $proc= Get-Process -name devenv
+        do {
+            [Microsoft.VisualBasic.Interaction]::AppActivate($proc[0].id)
+            start-sleep -Milliseconds 1500
+            [System.Windows.Forms.SendKeys]::SendWait($char)
+            start-sleep -Milliseconds 15000
+        }
+        until ($proc[0].HasExited)
     }
-
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName Microsoft.VisualBasic
-
-
-    start-process "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe" -ArgumentList "/resetSettings general.vssettings"
-    start-sleep -Milliseconds 120000
-    $proc= Get-Process -name devenv
-    do {
-        [Microsoft.VisualBasic.Interaction]::AppActivate($proc[0].id)
-        start-sleep -Milliseconds 1500
-        [System.Windows.Forms.SendKeys]::SendWait($char)
-        start-sleep -Milliseconds 15000
-    }
-    until ($proc[0].HasExited)
 }
 
 
@@ -504,7 +552,7 @@ switch ($step)
         "Installing VS2015 stuff"
 
         #get the visual Studio setup File_Path
-        $vsSetup = Get-VsSetupPath
+        $vsSetup = (Get-VsSetupPath).FullName
 
 
         #Get the visual Studio Product name (community, professional, enterprise)
@@ -567,6 +615,10 @@ switch ($step)
         #Install Vs2015AzurePack
      ##   Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
         
+        & $cmd $dl.Trimend('\')    
+        $cmd = Join-Path (Get-ScriptPath) opera.cmd
+        & $cmd $dl.Trimend('\')   
+          
         #Install TypeScript, git for windows, github VS
      ##   Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript;GitForWindows;GitHubVS;PowerShellTools' -wait
 
@@ -587,35 +639,46 @@ switch ($step)
         $cmd = Join-Path (Get-ScriptPath) chrome.cmd
         & $cmd $dl.Trimend('\')
         $cmd = Join-Path (Get-ScriptPath) firefox.cmd
-        & $cmd $dl.Trimend('\')    
+        & $cmd $dl.Trimend('\')
         $cmd = Join-Path (Get-ScriptPath) opera.cmd
-        & $cmd $dl.Trimend('\')   
-          
-  
-        "install Taskbar shortcut"
-        #does not work because of a bug in windows 10
-        $shell = new-object -com "Shell.Application"  
-        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} Google\Chrome\Application ))
-        $item = $folder.Parsename('chrome.exe')
-        $item.invokeverb('taskbarpin');
-       
-        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Mozilla Firefox" ))
-        $item = $folder.Parsename('firefox.exe')
-        $item.invokeverb('taskbarpin');
-    
-        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Opera" ))
-        $item = $folder.Parsename('launcher.exe')
-        $item.invokeverb('taskbarpin');
+        & $cmd $dl.Trimend('\')
  
-        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles} "Internet Explorer" ))
-        $item = $folder.Parsename("iexplore.exe")
-        $item.invokeverb('taskbarpin');
+        "install Taskbar shortcut"
+        if ($OsVersion -lt 10)
+        {
+            $shell = new-object -com "Shell.Application"  
+            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} Google\Chrome\Application ))
+            $item = $folder.Parsename('chrome.exe')
+            $item.invokeverb('taskbarpin');
+       
+            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Mozilla Firefox" ))
+            $item = $folder.Parsename('firefox.exe')
+            $item.invokeverb('taskbarpin');
+    
+            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Opera" ))
+            $item = $folder.Parsename('launcher.exe')
+            $item.invokeverb('taskbarpin');
+ 
+            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles} "Internet Explorer" ))
+            $item = $folder.Parsename("iexplore.exe")
+            $item.invokeverb('taskbarpin');
 
-        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio 14.0\Common7\IDE" ))
-        $item = $folder.Parsename('devenv.exe')
-        $item.invokeverb('taskbarpin');
+            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio 14.0\Common7\IDE" ))
+            $item = $folder.Parsename('devenv.exe')
+            $item.invokeverb('taskbarpin');
 
-        $shell=$null
+            $shell=$null
+        }
+        else
+        
+        {
+            Pin-ToTaskbar "Google Chrome"
+            Pin-ToTaskbar "Mozilla Firefox"
+            Pin-ToTaskbar "Opera"
+            Pin-ToTaskbar "Visual Studio 2015"
+        }
+
+
 
         "Initialize Visual Studio"
         Initialize-VisualStudio

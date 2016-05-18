@@ -1,10 +1,18 @@
 ﻿
 
-$dl=$env:USERPROFILE + "\downloads\"
+function detect-localdb 
+{ 
+  if ((Get-childItem -ErrorAction Ignore -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server Local DB\Installed Versions\").Length -gt 0) 
+  {
+   return $true
+  } else { return $false }
+}
 
 
 &start Microsoft-Edge:https://msftdbprodsamples.codeplex.com/downloads/get/880661
 
+
+###------------------------------------------------------
 
 write-host "Waiting file to finish downloading" -NoNewline
 while ( -not (Test-Path (Join-path $dl  "Adventure Works 2014 Full Database Backup.zip")))
@@ -35,11 +43,8 @@ WITH
 
 
 
-
 ###----------------------------------------------------
 
-
-$dl=$env:USERPROFILE + "\downloads\"
 
 
 &start Microsoft-Edge:https://msftdbprodsamples.codeplex.com/downloads/get/880664
@@ -75,9 +80,12 @@ WITH
 
 &  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
 
+
+###-------------------------------------------------------------------------------
+
+
 del (Join-path $dl  "Adventure Works 2014 Full Database Backup.zip")
 del (Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip")
-
 
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -93,4 +101,5 @@ do {
     start-sleep -Milliseconds 3000
 }
 until ($edge[0].HasExited)
+
 
