@@ -643,7 +643,45 @@ switch ($step)
         $cmd = Join-Path (Get-ScriptPath) opera.cmd
         & $cmd $dl.Trimend('\')
  
-        "install Taskbar shortcut"
+
+        "Initialize Visual Studio"
+        Initialize-VisualStudio
+          
+        "Reenable UAC "              
+        if (-not $isServer)
+        {
+            Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -Value 1
+        }
+
+
+ 
+        "Reenable Windows Defender"
+        Set-MpPreference -DisableRealtimeMonitoring $false
+      
+        "Reenable Execution Policy"
+        Set-ExecutionPolicy Unrestricted    
+     
+        "6">($stepFile) 
+        "Étape 5 terminée"
+
+        Restart-Computer 
+        break  
+    }
+    6
+    {   
+        Show-Warning
+
+        "Remove Script"
+        Remove-ItemProperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -name "myScript"
+
+        if (-NOT $isserver )
+        { 
+            "Update the windows store"
+            Update-StoreApps
+        }
+
+
+        "install Taskbar shortcuts"
         if ($OsVersion -lt 10)
         {
             $shell = new-object -com "Shell.Application"  
@@ -676,42 +714,6 @@ switch ($step)
             Pin-ToTaskbar "Mozilla Firefox"
             Pin-ToTaskbar "Opera"
             Pin-ToTaskbar "Visual Studio 2015"
-        }
-
-
-
-        "Initialize Visual Studio"
-        Initialize-VisualStudio
-          
-        "Reenable UAC "              
-        if (-not $isServer)
-        {
-            Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -Value 1
-        }
- 
-        "Reenable Windows Defender"
-        Set-MpPreference -DisableRealtimeMonitoring $false
-      
-        "Reenable Execution Policy"
-        Set-ExecutionPolicy Unrestricted    
-     
-        "6">($stepFile) 
-        "Étape 5 terminée"
-
-        Restart-Computer 
-        break  
-    }
-    6
-    {   
-        Show-Warning
-
-        "Remove Script"
-        Remove-ItemProperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -name "myScript"
-
-        if (-NOT $isserver )
-        { 
-            #update the windows store
-            Update-StoreApps
         }
 
         Set-Background "restore"
