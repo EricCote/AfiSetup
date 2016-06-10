@@ -1,4 +1,7 @@
 ﻿
+Set-ExecutionPolicy bypass
+
+$dl=$env:USERPROFILE + "\downloads\"
 
 function detect-localdb 
 { 
@@ -84,8 +87,45 @@ WITH
 ###-------------------------------------------------------------------------------
 
 
+
+
+
+&start Microsoft-Edge:https://msftdbprodsamples.codeplex.com/downloads/get/354847
+
+
+write-host "Waiting file to finish downloading" -NoNewline
+while ( -not (Test-Path (Join-path $dl  "AdventureWorksLT2012_Data.mdf")))
+{
+    write-host "." -NoNewline
+    start-sleep -Seconds 3
+}
+"Download completed."
+
+Copy-Item  -Path (Join-path $dl  "AdventureWorksLT2012_Data.mdf") -Destination 'c:\aw\'
+
+
+
+& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
+& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
+
+$cmd="
+CREATE DATABASE AdventureWorksLT2012 ON 
+( FILENAME = N'C:\aw\AdventureWorksLT2012_Data.mdf' )
+ FOR ATTACH_REBUILD_LOG  ;
+"
+
+&  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
+
+
+
+
+
+#####---------------------------------------------------------------------------------------------
+
+
 del (Join-path $dl  "Adventure Works 2014 Full Database Backup.zip")
 del (Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip")
+del (Join-path $dl  "AdventureWorksLT2012_Data.mdf")
 
 
 Add-Type -AssemblyName System.Windows.Forms

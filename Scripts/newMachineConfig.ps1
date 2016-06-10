@@ -288,6 +288,9 @@ function Set-LanguageAndKeyboard
         [ValidateSet("en-US.xml","fr-FR.xml","fr-CA.xml")] $fileName
     )
 
+
+
+    #$confPath= Join-Path "C:\demo"  "en-US.xml"
     $confPath = Join-Path (Get-ScriptPath) $fileName
     $arguments = 'intl.cpl,, /f:"' + $confPath + '"'
     Start-Process control.exe -ArgumentList ($arguments)     
