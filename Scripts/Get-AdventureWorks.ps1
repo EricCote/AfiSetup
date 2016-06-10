@@ -1,5 +1,5 @@
 ﻿
-Set-ExecutionPolicy bypass
+Set-ExecutionPolicy -scope process  bypass
 
 $dl=$env:USERPROFILE + "\downloads\"
 
