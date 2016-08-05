@@ -458,7 +458,7 @@ switch ($step)
 
        "installation du poste"
         #Disable the script execution policy for future scripts that are running 
-        Set-ExecutionPolicy bypass -Scope LocalMachine
+        Set-ExecutionPolicy bypass -Scope LocalMachine -Force
         #Set-ExecutionPolicy bypass -Scope CurrentUser
         #Get-ExecutionPolicy -List
     
@@ -677,7 +677,7 @@ switch ($step)
         Set-MpPreference -DisableRealtimeMonitoring $false
       
         "Reenable Execution Policy"
-        Set-ExecutionPolicy Unrestricted    
+        Set-ExecutionPolicy Unrestricted  -Scope LocalMachine -Force  
      
         "6">($stepFile) 
         "Étape 5 terminée"
