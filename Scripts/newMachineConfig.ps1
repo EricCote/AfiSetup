@@ -165,7 +165,13 @@ function Install-MediaFeatures
         #detect if windows media playback is not installed
         if ($HasMedia -ne 'Enabled' -and $OsVersion -eq 10 )
         {
-            $url="https://download.microsoft.com/download/B/E/3/BE302763-5BFD-4209-9C98-02DF5B2DB452/KB3099229_x64.msu"
+            $url="https://download.microsoft.com/download/1/3/F/13F19BF0-17CF-4D0F-938C-41D0489C3FE6/KB3133719-x64.msu.msu"
+
+            
+            if ($BuildVersion -lt 14393) 
+            {
+               $url="https://download.microsoft.com/download/B/E/3/BE302763-5BFD-4209-9C98-02DF5B2DB452/KB3099229_x64.msu"
+            }
            
             if ($BuildVersion -lt 10586) 
             {
@@ -239,10 +245,15 @@ function Install-FrenchLanguagePack
 {
     $LanguagePackSource=""
 
-    if (-NOT $isserver -and $OsVersion -eq 10 )
+    if (-NOT $isserver -and $OsVersion -eq 10 )   
     {             
-        $LanguagePackSource = "http://download.windowsupdate.com/d/msdownload/update/software/updt/2015/11/lp_7f834b68030b2e216d529c565305ea0ee8bb2489.cab"
-        
+        $LanguagePackSource = "http://download.windowsupdate.com/c/msdownload/update/software/updt/2016/07/lp_a63abaa1136ce9bd7a50ae1eaf54f1a58500c1a7.cab"
+            
+        if ($BuildVersion -lt 14393) 
+        {
+            $LanguagePackSource = "http://download.windowsupdate.com/d/msdownload/update/software/updt/2015/11/lp_7f834b68030b2e216d529c565305ea0ee8bb2489.cab"
+        }
+       
         if ($BuildVersion -lt 10586)
         {
             $LanguagePackSource = "http://download.windowsupdate.com/d/msdownload/update/software/updt/2015/07/lp_8f6e1d4cb3972edef76030b917020b7ee6cf6582.cab"
@@ -273,6 +284,8 @@ function Install-FrenchKeyboardsAndDictionaries
         #add-WindowsCapability -online -name Language.Basic~~~fr-FR~0.0.1.0
         add-WindowsCapability -online -name Language.Basic~~~fr-CA~0.0.1.0
         add-WindowsCapability -online -name Language.OCR~~~fr-CA~0.0.1.0
+        add-WindowsCapability -online -name Language.Speech~~~fr-CA~0.0.1.0
+        add-WindowsCapability -online -name Language.TextToSpeech~~~fr-CA~0.0.1.0
     }
 
     $lang=Get-WinUserLanguageList 
@@ -446,6 +459,8 @@ switch ($step)
        "installation du poste"
         #Disable the script execution policy for future scripts that are running 
         Set-ExecutionPolicy bypass -Scope LocalMachine
+        #Set-ExecutionPolicy bypass -Scope CurrentUser
+        #Get-ExecutionPolicy -List
     
         #Show hidden Files
         Set-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced HideFileExt "0"
