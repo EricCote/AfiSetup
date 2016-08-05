@@ -130,7 +130,9 @@ function Update-StoreApps
     start ms-windows-store:updates 
     start-sleep -Milliseconds 4000
     [System.Windows.Forms.SendKeys]::SendWait("~")
-    start-sleep -Milliseconds 6000
+    start-sleep -Milliseconds 8000
+    [System.Windows.Forms.SendKeys]::SendWait("{TAB}~")
+    start-sleep -Milliseconds 3000
     [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
 }
 
@@ -365,14 +367,15 @@ function Pin-ToTaskbar
 
     
     [System.Windows.Forms.SendKeys]::SendWait("^{ESC}") # Ctrl-Esc to call start menu 
-    start-sleep -Milliseconds 200
+    start-sleep -Milliseconds 400
     [System.Windows.Forms.SendKeys]::SendWait($appname) # type app name 
-    start-sleep -Milliseconds 300
+    start-sleep -Milliseconds 400
     [System.Windows.Forms.SendKeys]::SendWait("+{F10}")  # Shift-F10 to call right-click menu
-    start-sleep -Milliseconds 200
+    start-sleep -Milliseconds 400
     [System.Windows.Forms.SendKeys]::SendWait("{DOWN}{DOWN}{DOWN}{DOWN}") # down 4 times,
     [System.Windows.Forms.SendKeys]::SendWait("{ENTER}") # enter
     [System.Windows.Forms.SendKeys]::SendWait("{ESC}") # escape
+    start-sleep -Milliseconds 200
 }
 
 
@@ -633,10 +636,7 @@ switch ($step)
         #Install Vs2015AzurePack
      ##   Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
         
-        & $cmd $dl.Trimend('\')    
-        $cmd = Join-Path (Get-ScriptPath) opera.cmd
-        & $cmd $dl.Trimend('\')   
-          
+
         #Install TypeScript, git for windows, github VS
      ##   Start-process $vssetup  -ArgumentList '/passive /installselectableitems TypeScript;GitForWindows;GitHubVS;PowerShellTools' -wait
 
@@ -679,13 +679,13 @@ switch ($step)
         "Reenable Execution Policy"
         Set-ExecutionPolicy Unrestricted  -Scope LocalMachine -Force  
      
-        "6">($stepFile) 
-        "Étape 5 terminée"
+        "4">($stepFile) 
+        "Étape 3 terminée"
 
         Restart-Computer 
         break  
     }
-    6
+    4
     {   
         Show-Warning
 
@@ -737,14 +737,14 @@ switch ($step)
         Set-Background "restore"
     
         "Etapes terminees.  C'est fini!" 
-        "7">($stepFile) 
+        "5">($stepFile) 
         break   
     }
-    7
+    5
     {
 
-         "8">($stepFile) 
-        "Étape 7 terminé"
+         "6">($stepFile) 
+        "Étape 5 terminé"
       
         break  
     }
