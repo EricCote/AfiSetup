@@ -481,7 +481,7 @@ switch ($step)
         }
         
         #set registry entries to automatically log on 5 times
-        Set-AutoLogon -loginName '.\afi' -password 'afi12345!' -count 5 
+        Set-AutoLogon -loginName '.\afi' -password 'afi12345678!' -count 5 
 
 
         #If windows client
