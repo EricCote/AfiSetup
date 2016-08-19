@@ -14,34 +14,129 @@ function detect-localdb
 }
 
 
-#[HKEY_CURRENT_USER\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Download]
-#"EnableSavePrompt"=dword:00000000
 
+
+function Download-FromEdge
+{
+ param 
+    (
+        [parameter(position=1,mandatory=$true)] $url,
+        [parameter(position=2,mandatory=$true)] $filename
+
+    )  
+
+    & "cmd.exe" (" /c start Microsoft-Edge:" + $url)
+
+
+    write-host "Waiting file to finish downloading" -NoNewline
+    while ( -not (Test-Path (Join-path $dl  $filename)))
+    {
+        write-host "." -NoNewline
+        start-sleep -Seconds 3
+    }
+    "Download completed."
+
+    
+}
+
+
+
+function Run-Sql
+{
+    param 
+    (
+        [parameter(position=1,mandatory=$true)] $sqlString
+    )   
+
+    $sqlcmd=""
+    if (test-path "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd.exe")
+    {$sqlcmd="C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd.exe";};
+
+    if (test-path "C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn\SQLCMD.EXE")
+    {$sqlcmd="C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn\SQLCMD.EXE";};
+
+    if (test-path "C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\SQLCMD.EXE")
+    {$sqlcmd="C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\SQLCMD.EXE";};
+
+    $svr=""
+    if((Get-ItemPropertyValue -ErrorAction Ignore "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL\" "MSSQLSERVER").Length -gt  0)
+    { $svr="." }
+    else
+    { $svr="(localdb)\MSSQLLocalDB" }
+
+
+    return & $sqlcmd -S $svr -E -Q $SqlString
+ 
+
+}
+
+function Get-SqlEdition
+{   
+    $aString = Run-Sql "SELECT SERVERPROPERTY ('edition') as x";
+    
+    if  (($aString | Select-String '(\w+) Edition') -match  '(\w+) Edition' )
+    {return $Matches[1];}
+
+}
+
+
+function Get-SqlYear
+{
+  
+    $versionString = Run-Sql "SELECT @@Version";
+   
+    if ($versionString -match 'Microsoft SQL Server (\d+)')  
+    { 
+        [int] $year = $Matches[1];
+        return $year;
+    }
+
+    else 
+    {
+        return 0
+    }
+
+}
+
+
+function Download-File
+{
+    Param([parameter(Position=1)]
+      $Source, 
+      [parameter(Position=2)]
+      $Destination
+    )
+
+    $wc = new-object System.Net.WebClient
+    $wc.DownloadFile($Source,$Destination)
+    $wc.Dispose()
+}
+
+
+
+
+#enable automatic download
 New-Item -name Download -path "HKCU:\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\"
              
 
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Download" `
                            -Name "EnableSavePrompt" -Value 0 
 
-&start Microsoft-Edge:https://msftdbprodsamples.codeplex.com/downloads/get/880661
+#start localDB
+& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
+& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
+
 
 
 ###------------------------------------------------------
 
-write-host "Waiting file to finish downloading" -NoNewline
-while ( -not (Test-Path (Join-path $dl  "Adventure Works 2014 Full Database Backup.zip")))
-{
-    write-host "." -NoNewline
-    start-sleep -Seconds 3
-}
-"Download completed."
+Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880661" "Adventure Works 2014 Full Database Backup.zip"
+
+
 
 add-type -AssemblyName System.IO.Compression.FileSystem
 [system.io.compression.zipFile]::ExtractToDirectory((Join-path $dl  "Adventure Works 2014 Full Database Backup.zip"),'c:\aw\')
 
-
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
 
 $cmd="
 RESTORE DATABASE AdventureWorks2014
@@ -53,7 +148,7 @@ WITH
   TO 'C:\AW\AdventureWorks_log.ldf';
 "
 
-&  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
+run-sql $cmd
 
 
 
@@ -61,26 +156,13 @@ WITH
 
 
 
-&start Microsoft-Edge:https://msftdbprodsamples.codeplex.com/downloads/get/880664
-
-
-write-host "Waiting file to finish downloading" -NoNewline
-while ( -not (Test-Path (Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip")))
-{
-    write-host "." -NoNewline
-    start-sleep -Seconds 3
-}
-"Download completed."
-
-
+Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880664" "Adventure Works DW 2014 Full Database Backup.zip"
 
 
 add-type -AssemblyName System.IO.Compression.FileSystem
 [system.io.compression.zipFile]::ExtractToDirectory((Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip"),'c:\aw\')
 
 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
 
 $cmd="
 RESTORE DATABASE AdventureWorksDW2014
@@ -92,32 +174,18 @@ WITH
   TO 'C:\AW\AdventureWorksDW_log.ldf';
 "
 
-&  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
+run-sql $cmd
 
 
 ###-------------------------------------------------------------------------------
 
 
 
+Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/354847" "AdventureWorksLT2012_Data.mdf"
 
-
-&start Microsoft-Edge:https://msftdbprodsamples.codeplex.com/downloads/get/354847
-
-
-write-host "Waiting file to finish downloading" -NoNewline
-while ( -not (Test-Path (Join-path $dl  "AdventureWorksLT2012_Data.mdf")))
-{
-    write-host "." -NoNewline
-    start-sleep -Seconds 3
-}
-"Download completed."
 
 Copy-Item  -Path (Join-path $dl  "AdventureWorksLT2012_Data.mdf") -Destination 'c:\aw\'
 
-
-
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
 
 $cmd="
 CREATE DATABASE AdventureWorksLT2012 ON 
@@ -125,47 +193,41 @@ CREATE DATABASE AdventureWorksLT2012 ON
  FOR ATTACH_REBUILD_LOG  ;
 "
 
-&  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
+run-sql $cmd
 
 
 ###-------------------------------------------------------------------------------
 
 
-
-
-&start Microsoft-Edge:https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImporters-Standard.bak
-#https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImporters-.bak
-
-write-host "Waiting file to finish downloading" -NoNewline
-while ( -not (Test-Path (Join-path $dl  "WideWorldImporters-Standard.bak")))
+if (get-sqlYear -get 2016)
 {
-    write-host "." -NoNewline
-    start-sleep -Seconds 3
-}
-"Download completed."
+  $SqlFeature="Standard"
+  if(("Enterprise","Developper") -contains (Get-SqlEdition))
+  { $SqlFeature="Full" }
+ 
 
-Copy-Item  -Path (Join-path $dl  "WideWorldImporters-Standard.bak") -Destination 'c:\aw\'
+Download-File ("https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImporters-" + $SqlFeature + ".bak")  (Join-path $dl  ("WideWorldImporters-" + $SqlFeature + ".bak"))
 
 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
+
+Copy-Item  -Path (Join-path $dl  "WideWorldImporters-*.bak") -Destination 'c:\aw\'
+
 
 $cmd="
 RESTORE DATABASE WideWorldImporters
-  FROM DISK = 'C:\AW\WideWorldImporters-Standard.bak'
+  FROM DISK = 'C:\AW\WideWorldImporters-" +  $SqlFeature  +  ".bak'
 WITH   
   MOVE 'WWI_Primary' 
   TO 'C:\AW\WideWorldImporters.mdf', 
   MOVE 'WWI_UserData' 
   TO 'C:\AW\WideWorldImporters_UserData.ndf',
-  --MOVE 'WWI_InMemory_Data_1' 
-  --TO 'c:\AW\WideWorldImporters_InMemory_Data_1',
+"  +  (if ($SqlFeature -eq "Full") {  " MOVE 'WWI_InMemory_Data_1' TO 'c:\AW\WideWorldImporters_InMemory_Data_1', " } else {""}) + "
   MOVE 'WWI_Log' 
   TO 'C:\AW\WideWorldImporters.ldf';
 "
 
 
-&  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
+Run-Sql $cmd
 
 
 
@@ -175,43 +237,30 @@ WITH
 
 
 
-&start Microsoft-Edge:https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImportersDW-Standard.bak
+Download-File "https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImportersDW-$SqlFeature.bak" "WideWorldImportersDW-$SqlFeature.bak"
 
 
-write-host "Waiting file to finish downloading" -NoNewline
-while ( -not (Test-Path (Join-path $dl  "WideWorldImportersDW-Standard.bak")))
-{
-    write-host "." -NoNewline
-    start-sleep -Seconds 3
-}
-"Download completed."
+Copy-Item  -Path (Join-path $dl  "WideWorldImportersDW-*.bak") -Destination 'c:\aw\'
 
-Copy-Item  -Path (Join-path $dl  "WideWorldImportersDW-Standard.bak") -Destination 'c:\aw\'
-
-
-
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
-& "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
 
 $cmd="
 RESTORE DATABASE WideWorldImportersDW
-  FROM DISK = 'C:\AW\WideWorldImportersDW-Standard.bak'
+  FROM DISK = 'C:\AW\WideWorldImportersDW-" +  $SqlFeature  +  ".bak'
 WITH   
   MOVE 'WWI_Primary' 
   TO 'C:\AW\WideWorldImportersDW.mdf', 
   MOVE 'WWI_UserData' 
   TO 'C:\AW\WideWorldImportersDW_UserData.ndf',
-  --MOVE 'WWI_InMemory_Data_1' 
-  --TO 'c:\AW\WideWorldImporters_InMemory_Data_1',
+"  +  (if ($SqlFeature -eq "Full") {  " MOVE 'WWI_InMemory_Data_1' TO 'c:\AW\WideWorldImportersDW_InMemory_Data_1', " } else {""}) + "
   MOVE 'WWI_Log' 
   TO 'C:\AW\WideWorldImportersDW.ldf';
 "
 
 
-&  "C:\Program Files\Microsoft SQL Server\110\Tools\Binn\sqlcmd" -S "(localdb)\MSSQLLocalDB"   -E -Q $cmd
+run-sql $cmd
 
 
-
+}
 
 
 
