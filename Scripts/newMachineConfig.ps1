@@ -633,6 +633,38 @@ switch ($step)
         #Install WebPI
         Start-Process "msiexec" -ArgumentList ('/passive /i "' + $dl  + 'WebPlatformInstaller_amd64_en-US.msi"')  -Wait 
         
+
+        #Download fix for update3
+        Download-File "http://download.microsoft.com/download/7/f/5/7f5dadbd-c2da-4c0e-b2c7-0facadce633d/vs14-kb3165756.exe" `
+                     ($dl + "vs14-kb3165756.exe")
+        
+        #Download fix for update3
+        Start-Process  ($dl + "vs14-kb3165756.exe") -ArgumentList ('/passive /promptrestart')  -Wait 
+
+        #download ssdt
+        Download-File "https://go.microsoft.com/fwlink/?LinkID=824659&clcid=0x409" `
+                   ($dl + "SSDTSetup.exe")
+
+        #install ssdt
+        Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('INSTALLALL=1  /passive /promptrestart')  -Wait 
+
+
+        #download asp.net tooling preview 2
+        Download-File "https://visualstudiogallery.msdn.microsoft.com/c94a02e9-f2e9-4bad-a952-a63a967e3935/file/77371/10/DotNetCore.1.0.0-VS2015Tools.Preview2.0.1.exe" `
+                   ($dl + "DotNetCore.1.0.0-VS2015Tools.Preview2.0.1.exe")
+
+        #install asp.net tooling preview 2
+        Start-Process  ($dl + "DotNetCore.1.0.0-VS2015Tools.Preview2.0.1.exe") -ArgumentList ('  /passive /promptrestart ')  -Wait 
+
+
+         #download French VS Language pack
+        Download-File "https://download.microsoft.com/download/5/8/F/58F2ADD0-CE37-4377-9D50-269552FE061A/vs_langpack.exe" `
+                   ($dl + "vs_langpack.exe")
+
+        #install French VS Language pack
+        Start-Process  ($dl + "vs_langpack.exe") -ArgumentList ('  /passive /promptrestart ')  -Wait 
+
+
         #Install Vs2015AzurePack
      ##   Start-Process  ($env:ProgramFiles + "\Microsoft\Web Platform Installer\WebpiCmd.exe") -ArgumentList ('/install /products:Vs2015AzurePack /log:"' + $env:USERPROFILE  + '\downloads\azure.log" /AcceptEula') -wait
         
