@@ -1,5 +1,4 @@
-﻿
-Set-ExecutionPolicy -scope process  bypass
+﻿Set-ExecutionPolicy -scope process  bypass
 
 
 
@@ -210,6 +209,9 @@ Download-File ("https://github.com/Microsoft/sql-server-samples/releases/downloa
 
 Copy-Item  -Path (Join-path $dl  "WideWorldImporters-*.bak") -Destination 'c:\aw\'
 
+$part=""
+if ($SqlFeature -eq "Full") 
+{  $part = " MOVE 'WWI_InMemory_Data_1' TO 'c:\AW\WideWorldImporters_InMemory_Data_1', " };
 
 $cmd="
 RESTORE DATABASE WideWorldImporters
@@ -219,7 +221,7 @@ WITH
   TO 'C:\AW\WideWorldImporters.mdf', 
   MOVE 'WWI_UserData' 
   TO 'C:\AW\WideWorldImporters_UserData.ndf',
-"  +  (if ($SqlFeature -eq "Full") {  " MOVE 'WWI_InMemory_Data_1' TO 'c:\AW\WideWorldImporters_InMemory_Data_1', " } else {""}) + "
+"  + $part + "
   MOVE 'WWI_Log' 
   TO 'C:\AW\WideWorldImporters.ldf';
 "
@@ -235,10 +237,14 @@ Run-Sql $cmd
 
 
 
-Download-File "https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImportersDW-$SqlFeature.bak" "WideWorldImportersDW-$SqlFeature.bak"
+Download-File "https://github.com/Microsoft/sql-server-samples/releases/download/wide-world-importers-v1.0/WideWorldImportersDW-$SqlFeature.bak" (Join-path $dl "WideWorldImportersDW-$SqlFeature.bak")
 
 
 Copy-Item  -Path (Join-path $dl  "WideWorldImportersDW-*.bak") -Destination 'c:\aw\'
+
+$part=""
+if ($SqlFeature -eq "Full") 
+{  $part =  " MOVE 'WWIDW_InMemory_Data_1' TO 'c:\AW\WideWorldImportersDW_InMemory_Data_1', "  };
 
 
 $cmd="
@@ -249,7 +255,7 @@ WITH
   TO 'C:\AW\WideWorldImportersDW.mdf', 
   MOVE 'WWI_UserData' 
   TO 'C:\AW\WideWorldImportersDW_UserData.ndf',
-"  +  (if ($SqlFeature -eq "Full") {  " MOVE 'WWI_InMemory_Data_1' TO 'c:\AW\WideWorldImportersDW_InMemory_Data_1', " } else {""}) + "
+"  + $part + "
   MOVE 'WWI_Log' 
   TO 'C:\AW\WideWorldImportersDW.ldf';
 "
@@ -285,5 +291,8 @@ do {
     start-sleep -Milliseconds 3000
 }
 until ($edge[0].HasExited)
+
+
+
 
 
