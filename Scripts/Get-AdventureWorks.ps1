@@ -85,12 +85,10 @@ function Get-SqlYear
   
     $versionString = Run-Sql "SELECT @@Version";
    
-    if ($versionString -match 'Microsoft SQL Server (\d+)')  
-    { 
-        [int] $year = $Matches[1];
-        return $year;
+    if (($versionString  | Select-String 'Microsoft SQL Server (\d+)') -match  'Microsoft SQL Server (\d+)' )
+    {
+        return [int]::Parse($Matches[1]);
     }
-
     else 
     {
         return 0
@@ -202,7 +200,7 @@ run-sql $cmd
 if (get-sqlYear -get 2016)
 {
   $SqlFeature="Standard"
-  if(("Enterprise","Developper") -contains (Get-SqlEdition))
+  if(("Enterprise","Developer") -contains (Get-SqlEdition))
   { $SqlFeature="Full" }
  
 
