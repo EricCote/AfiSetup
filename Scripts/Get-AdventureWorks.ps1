@@ -1,7 +1,6 @@
 ﻿Set-ExecutionPolicy -scope process  bypass
 
 
-
 $dl=$env:USERPROFILE + "\downloads\"
 
 function detect-localdb 
@@ -33,11 +32,8 @@ function Download-FromEdge
         write-host "." -NoNewline
         start-sleep -Seconds 3
     }
-    "Download completed."
-
-    
+    "Download completed."    
 }
-
 
 
 function Run-Sql
@@ -63,10 +59,7 @@ function Run-Sql
     else
     { $svr="(localdb)\MSSQLLocalDB" }
 
-
     return & $sqlcmd -S $svr -E -Q $SqlString
- 
-
 }
 
 function Get-SqlEdition
@@ -77,7 +70,6 @@ function Get-SqlEdition
     {return $Matches[1];}
 
 }
-
 
 function Get-SqlYear
 {
@@ -95,6 +87,28 @@ function Get-SqlYear
 
 }
 
+function Get-codeplexVersion
+{
+   $response= Invoke-WebRequest -uri "http://www.codeplex.com/";
+   if ($response.RawContent -match "<li>Version \d+\.\d+\.\d+\.(\d+)</li>")
+   {   return $Matches[1]; };
+}
+function Stop-EdgeBrowser
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName Microsoft.VisualBasic
+
+    $edge= Get-Process -name microsoftEdge
+    do {
+        [Microsoft.VisualBasic.Interaction]::AppActivate("edge")
+        start-sleep -Milliseconds 1500
+        [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
+        start-sleep -Milliseconds 700
+        [System.Windows.Forms.SendKeys]::SendWait("~")
+        start-sleep -Milliseconds 3000
+    }
+    until ($edge[0].HasExited)
+}
 
 function Download-File
 {
@@ -110,29 +124,36 @@ function Download-File
 }
 
 
-
-
-#enable automatic download
-New-Item -name Download -path "HKCU:\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\"
+function Enable-AutomaticDownloadEdge
+{
+    #enable automatic download
+    New-Item -name Download -path "HKCU:\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\"
              
 
-Set-ItemProperty -Path "HKCU:\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Download" `
-                           -Name "EnableSavePrompt" -Value 0 
+    Set-ItemProperty -Path "HKCU:\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Download" `
+                               -Name "EnableSavePrompt" -Value 0 
+}
+
+
 
 #start localDB
 & "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
 & "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
 
+#get codeplex-Version
+$codeplexVersion= Get-CodeplexVersion
+
 
 
 ###------------------------------------------------------
 
-Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880661" "Adventure Works 2014 Full Database Backup.zip"
+#Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880661" "Adventure Works 2014 Full Database Backup.zip"
+$FileNameAW2014=Join-path $dl  "Adventure Works 2014 Full Database Backup.zip"
 
-
+Download-File "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=msftdbprodsamples&DownloadId=880661&FileTime=130507138100830000&Build=$codeplexVersion" $FileNameAW2014
 
 add-type -AssemblyName System.IO.Compression.FileSystem
-[system.io.compression.zipFile]::ExtractToDirectory((Join-path $dl  "Adventure Works 2014 Full Database Backup.zip"),'c:\aw\')
+[system.io.compression.zipFile]::ExtractToDirectory($FileNameAW2014,'c:\aw\')
 
 
 $cmd="
@@ -153,11 +174,14 @@ run-sql $cmd
 
 
 
-Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880664" "Adventure Works DW 2014 Full Database Backup.zip"
+#Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880664" "Adventure Works DW 2014 Full Database Backup.zip"
+$FileNameAWDW2014=Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip"
+
+Download-File "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=msftdbprodsamples&DownloadId=880664&FileTime=130511246406570000&Build=$codeplexVersion" $FileNameAWDW2014
 
 
 add-type -AssemblyName System.IO.Compression.FileSystem
-[system.io.compression.zipFile]::ExtractToDirectory((Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip"),'c:\aw\')
+[system.io.compression.zipFile]::ExtractToDirectory($FileNameAWDW2014,'c:\aw\')
 
 
 
@@ -176,13 +200,11 @@ run-sql $cmd
 
 ###-------------------------------------------------------------------------------
 
+$FileNameAWLT2012 = Join-path $dl "AdventureWorksLT2012_Data.mdf";
 
+Download-File  "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=msftdbprodsamples&DownloadId=354847&FileTime=129764108568330000&Build=$codeplexVersion" $FileNameAWLT2012
 
-Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/354847" "AdventureWorksLT2012_Data.mdf"
-
-
-Copy-Item  -Path (Join-path $dl  "AdventureWorksLT2012_Data.mdf") -Destination 'c:\aw\'
-
+Copy-Item  -Path $FileNameAWLT2012 -Destination 'c:\aw\'
 
 $cmd="
 CREATE DATABASE AdventureWorksLT2012 ON 
@@ -271,26 +293,12 @@ run-sql $cmd
 #####---------------------------------------------------------------------------------------------
 
 
-del (Join-path $dl  "Adventure Works 2014 Full Database Backup.zip")
-del (Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip")
-del (Join-path $dl  "AdventureWorksLT2012_Data.mdf") 
-del (Join-path $dl  "WideWorldImporters-Standard.bak") 
-del (Join-path $dl  "WideWorldImportersDW-Standard.bak") 
+del $FileNameAW2014
+del $FileNameAWDW2014
+del $FileNameAWLT2012
+del (Join-path $dl  "WideWorldImporters*.bak") 
+ 
 
-
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName Microsoft.VisualBasic
-
-$edge= Get-Process -name microsoftEdge
-do {
-    [Microsoft.VisualBasic.Interaction]::AppActivate("edge")
-    start-sleep -Milliseconds 1500
-    [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
-    start-sleep -Milliseconds 700
-    [System.Windows.Forms.SendKeys]::SendWait("~")
-    start-sleep -Milliseconds 3000
-}
-until ($edge[0].HasExited)
 
 
 
