@@ -314,7 +314,7 @@ function Set-LanguageAndKeyboard
 #Get VS Setup filepath exe  (ex: Vs_enterprise.exe or vs_community.exe) 
 function Get-VsSetupPath
 {
-    $result = Get-ChildItem -ErrorAction Ignore -Path "C:\ProgramData\Package Cache\" -Name "vs_*.exe" -Exclude "vs_*[psk].exe" -Recurse
+    $result = Get-ChildItem -ErrorAction Ignore -Path "C:\ProgramData\Package Cache\" -Name "vs_*.exe" -Exclude @("vs_*[psk].exe","vs_intshell*","vs_isoshell*")  -Recurse
     if ($result -eq $null) 
     {
        return $null
@@ -607,24 +607,18 @@ switch ($step)
         
         #start IE for the first-time (useful for later scripts)
         Initialize-IE
-         
-        #get Nuget  (TODO: this will fail when the new version of nuget comes along. We need something better.)
-      ##  Install-VSExtension "https://visualstudiogallery.msdn.microsoft.com/5d345edc-2e2d-4a9c-b73b-d53956dc458d/file/146283/7/NuGet.Tools.vsix"
-
-        #get "microsoft Azure Storage Connected Service"
-      ##  Install-VSExtension "https://visualstudiogallery.msdn.microsoft.com/c5f89a45-6549-4081-96dc-a76a461560bc/file/169224/2/Microsoft.VisualStudio.ConnectedServices.Azure.Storage.vsix" 
                 
-    
-        #get ssdt july 2015  (TODO: this will fail when the new version of ssdt comes along. We need something better.   
-     ##   Download-File "http://download.microsoft.com/download/4/D/3/4D39DA54-DF09-4628-B63D-685BFCE523EA/Dev14/EN/SSDTSetup.exe" `
-     ##                  ( $dl + "SSDTSetup.exe" )
-   
 
-        #get preview ssdt august 2015  (TODO: this will fail when the new version of ssdt comes along. We need something better.)
-    
-        #  Download-File "http://download.microsoft.com/download/C/B/D/CBD43835-E41E-4A4C-B040-664B8E6FB5B7/EN/SSDTSetup.exe" `
-        #                ( $dl + "SSDTSetup.exe" ) 
-       ## Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('/passive /promptrestart')  -Wait 
+        #if not null
+        if (Get-VsSetupPath) { 
+   
+           
+        #download French VS Language pack
+        Download-File "https://download.microsoft.com/download/5/8/F/58F2ADD0-CE37-4377-9D50-269552FE061A/vs_langpack.exe" `
+                   ($dl + "vs_langpack.exe")
+
+        #install French VS Language pack
+        Start-Process  ($dl + "vs_langpack.exe") -ArgumentList ('  /passive /promptrestart ')  -Wait 
 
 
         #Download WebPI
@@ -638,7 +632,7 @@ switch ($step)
         Download-File "http://download.microsoft.com/download/7/f/5/7f5dadbd-c2da-4c0e-b2c7-0facadce633d/vs14-kb3165756.exe" `
                      ($dl + "vs14-kb3165756.exe")
         
-        #Download fix for update3
+        #install fix for update3
         Start-Process  ($dl + "vs14-kb3165756.exe") -ArgumentList ('/passive /promptrestart')  -Wait 
 
       
@@ -659,23 +653,14 @@ switch ($step)
         Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('INSTALLALL=1  /passive /promptrestart')  -Wait 
 
 
-        #download French VS Language pack
-        Download-File "https://download.microsoft.com/download/5/8/F/58F2ADD0-CE37-4377-9D50-269552FE061A/vs_langpack.exe" `
-                   ($dl + "vs_langpack.exe")
-
-        #install French VS Language pack
-        Start-Process  ($dl + "vs_langpack.exe") -ArgumentList ('  /passive /promptrestart ')  -Wait 
-
-
-
         #Download vsCode
         Download-File "https://go.microsoft.com/fwlink/?LinkID=623230" `
                    ($dl + "VSCodeSetup-stable.exe")
 
-        #install French VS Language pack
-        Start-Process  ($dl + "VSCodeSetup-stable.exe") -ArgumentList ('  /silent ')  -Wait 
+        #install vscode
+        Start-Process  ($dl + "VSCodeSetup-stable.exe") -ArgumentList ('  /silent /tasks="desktopicon,associatewithfiles,addtopath" ') -Wait 
 
-
+        #remove last one ="desktopicon,associatewithfiles,addtopath,runcode"
 
 
         #Install Vs2015AzurePack
@@ -691,6 +676,29 @@ switch ($step)
      ##   {
      ##       Start-process $vssetup  -ArgumentList '/passive  /installselectableitems MDDJSCore' -wait
      ##   }
+
+     }  else {
+     
+     
+        #download ssdt
+        Download-File "https://go.microsoft.com/fwlink/?LinkID=824659&clcid=0x409" `
+                   ($dl + "SSDTSetup.exe")
+
+        #install ssdt
+        Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('INSTALLALL=1  /passive /promptrestart')  -Wait 
+
+
+        #Download vsCode
+        Download-File "https://go.microsoft.com/fwlink/?LinkID=623230" `
+                   ($dl + "VSCodeSetup-stable.exe")
+
+        #install vscode
+        Start-Process  ($dl + "VSCodeSetup-stable.exe") -ArgumentList ('  /silent /tasks="desktopicon,associatewithfiles,addtopath" ') -Wait 
+
+        #remove last one ="desktopicon,associatewithfiles,addtopath,runcode"
+
+     
+     }
         
         "Install Keyboard"  
         Set-LanguageAndKeyboard "en-US.xml"    
