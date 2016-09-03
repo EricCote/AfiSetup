@@ -35,6 +35,23 @@ function Download-FromEdge
     "Download completed."    
 }
 
+function Stop-EdgeBrowser
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName Microsoft.VisualBasic
+
+    $edge= Get-Process -name microsoftEdge
+    do {
+        [Microsoft.VisualBasic.Interaction]::AppActivate("edge")
+        start-sleep -Milliseconds 1500
+        [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
+        start-sleep -Milliseconds 700
+        [System.Windows.Forms.SendKeys]::SendWait("~")
+        start-sleep -Milliseconds 3000
+    }
+    until ($edge[0].HasExited)
+}
+
 
 function Run-Sql
 {
@@ -93,22 +110,6 @@ function Get-codeplexVersion
    if ($response.RawContent -match "<li>Version \d+\.\d+\.\d+\.(\d+)</li>")
    {   return $Matches[1]; };
 }
-function Stop-EdgeBrowser
-{
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName Microsoft.VisualBasic
-
-    $edge= Get-Process -name microsoftEdge
-    do {
-        [Microsoft.VisualBasic.Interaction]::AppActivate("edge")
-        start-sleep -Milliseconds 1500
-        [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
-        start-sleep -Milliseconds 700
-        [System.Windows.Forms.SendKeys]::SendWait("~")
-        start-sleep -Milliseconds 3000
-    }
-    until ($edge[0].HasExited)
-}
 
 function Download-File
 {
@@ -147,7 +148,6 @@ $codeplexVersion= Get-CodeplexVersion
 
 ###------------------------------------------------------
 
-#Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880661" "Adventure Works 2014 Full Database Backup.zip"
 $FileNameAW2014=Join-path $dl  "Adventure Works 2014 Full Database Backup.zip"
 
 Download-File "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=msftdbprodsamples&DownloadId=880661&FileTime=130507138100830000&Build=$codeplexVersion" $FileNameAW2014
@@ -173,8 +173,6 @@ run-sql $cmd
 ###----------------------------------------------------
 
 
-
-#Download-FromEdge  "https://msftdbprodsamples.codeplex.com/downloads/get/880664" "Adventure Works DW 2014 Full Database Backup.zip"
 $FileNameAWDW2014=Join-path $dl  "Adventure Works DW 2014 Full Database Backup.zip"
 
 Download-File "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=msftdbprodsamples&DownloadId=880664&FileTime=130511246406570000&Build=$codeplexVersion" $FileNameAWDW2014
