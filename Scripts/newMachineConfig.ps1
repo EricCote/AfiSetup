@@ -132,8 +132,9 @@ function Update-StoreApps
     [System.Windows.Forms.SendKeys]::SendWait("~")
     start-sleep -Milliseconds 8000
     [System.Windows.Forms.SendKeys]::SendWait("{TAB}~")
-    start-sleep -Milliseconds 3000
+    start-sleep -Milliseconds 8000
     [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
+    start-sleep -Milliseconds 3000
 }
 
 function Disable-IEESC
@@ -344,6 +345,117 @@ function Initialize-IE
     [System.Windows.Forms.SendKeys]::SendWait("%{F4}")
         
 }
+
+
+
+
+function Change-ProcessName
+{
+ param 
+    (
+        [parameter(position=1,mandatory=$true)] $appName
+    )  
+
+         $code = @'
+            static string originalImagePathName;
+            static int unicodeSize = IntPtr.Size * 2;
+ 
+            static void GetPointers(out IntPtr imageOffset, out IntPtr imageBuffer)
+            {
+                IntPtr pebBaseAddress = GetBasicInformation().PebBaseAddress;
+                var processParameters = Marshal.ReadIntPtr(pebBaseAddress, 4 * IntPtr.Size);
+                imageOffset = Increment(processParameters,4 * 4 + 5 * IntPtr.Size + unicodeSize + IntPtr.Size + unicodeSize);
+                imageBuffer = Marshal.ReadIntPtr(imageOffset, IntPtr.Size);
+            }
+ 
+            public static void ChangeImagePathName(string newFileName)
+            {
+                IntPtr imageOffset, imageBuffer;
+                GetPointers(out imageOffset, out imageBuffer);
+ 
+                //Read original data
+                var imageLen = Marshal.ReadInt16(imageOffset);
+                originalImagePathName = Marshal.PtrToStringUni(imageBuffer, imageLen / 2);
+ 
+                var newImagePathName = Path.Combine(Path.GetDirectoryName(originalImagePathName), newFileName);
+                if (newImagePathName.Length > originalImagePathName.Length) throw new Exception("new ImagePathName cannot be longer than the original one");
+ 
+                //Write the string, char by char
+                var ptr = imageBuffer;
+                foreach(var unicodeChar in newImagePathName)
+                {
+                    Marshal.WriteInt16(ptr, unicodeChar);
+                    ptr = Increment(ptr,2);
+                }
+                Marshal.WriteInt16(ptr, 0);
+ 
+                //Write the new length
+                Marshal.WriteInt16(imageOffset, (short) (newImagePathName.Length * 2));
+            }
+ 
+            public static void RestoreImagePathName()
+            {
+                IntPtr imageOffset, ptr;
+                GetPointers(out imageOffset, out ptr);
+ 
+                foreach (var unicodeChar in originalImagePathName)
+                {
+                    Marshal.WriteInt16(ptr, unicodeChar);
+                    ptr = Increment(ptr,2);
+                }
+                Marshal.WriteInt16(ptr, 0);
+                Marshal.WriteInt16(imageOffset, (short)(originalImagePathName.Length * 2));
+            }
+ 
+            public static ProcessBasicInformation GetBasicInformation()
+            {
+                uint status;
+                ProcessBasicInformation pbi;
+                int retLen;
+                var handle = System.Diagnostics.Process.GetCurrentProcess().Handle;
+                if ((status = NtQueryInformationProcess(handle, 0,
+                    out pbi, Marshal.SizeOf(typeof(ProcessBasicInformation)), out retLen)) >= 0xc0000000)
+                    throw new Exception("Windows exception. status=" + status);
+                return pbi;
+            }
+ 
+            [DllImport("ntdll.dll")]
+            public static extern uint NtQueryInformationProcess(
+                [In] IntPtr ProcessHandle,
+                [In] int ProcessInformationClass,
+                [Out] out ProcessBasicInformation ProcessInformation,
+                [In] int ProcessInformationLength,
+                [Out] [Optional] out int ReturnLength
+                );
+ 
+            public static IntPtr Increment(IntPtr ptr, int value)
+            {
+                unchecked
+                {
+                    if (IntPtr.Size == sizeof(Int32))
+                        return new IntPtr(ptr.ToInt32() + value);
+                    else
+                        return new IntPtr(ptr.ToInt64() + value);
+                }
+            }
+ 
+            [StructLayout(LayoutKind.Sequential)]
+            public struct ProcessBasicInformation
+            {
+                public uint ExitStatus;
+                public IntPtr PebBaseAddress;
+                public IntPtr AffinityMask;
+                public int BasePriority;
+                public IntPtr UniqueProcessId;
+                public IntPtr InheritedFromUniqueProcessId;
+            }
+'@
+
+        add-type -Namespace Win32 -Name ImageProcess -UsingNamespace System.IO -MemberDefinition  $code
+
+        [Win32.ImageProcess]::ChangeImagePathName($appName);
+}
+
 
 
 #Issues:
@@ -611,7 +723,8 @@ switch ($step)
 
         #if not null
         if (Get-VsSetupPath) { 
-   
+        "visual studio detected"   >> ($dl + "tests.txt")
+        "visual studio detected" 
            
         #download French VS Language pack
         Download-File "https://download.microsoft.com/download/5/8/F/58F2ADD0-CE37-4377-9D50-269552FE061A/vs_langpack.exe" `
@@ -678,14 +791,16 @@ switch ($step)
      ##   }
 
      }  else {
-     
+    
+             "visual studio NOT detected"   >> ($dl + "tests.txt")
+        "visual studio NOT detected" 
      
         #download ssdt
         Download-File "https://go.microsoft.com/fwlink/?LinkID=824659&clcid=0x409" `
                    ($dl + "SSDTSetup.exe")
 
         #install ssdt
-        Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('INSTALLALL=1  /passive /promptrestart')  -Wait 
+        #Start-Process  ($dl + "SSDTSetup.exe") -ArgumentList ('INSTALLALL=1  /passive /promptrestart')  -Wait 
 
 
         #Download vsCode
@@ -751,41 +866,34 @@ switch ($step)
             Update-StoreApps
         }
 
-
-        "install Taskbar shortcuts"
-        if ($OsVersion -lt 10)
+        if ($OsVersion -eq 10)
         {
-            $shell = new-object -com "Shell.Application"  
-            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} Google\Chrome\Application ))
-            $item = $folder.Parsename('chrome.exe')
-            $item.invokeverb('taskbarpin');
+           Change-ProcessName("explorer.exe")
+        }
+
+        $shell = new-object -com "Shell.Application"  
+        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} Google\Chrome\Application ))
+        $item = $folder.Parsename('chrome.exe')
+        $item.invokeverb('taskbarpin');
        
-            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Mozilla Firefox" ))
-            $item = $folder.Parsename('firefox.exe')
-            $item.invokeverb('taskbarpin');
+        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Mozilla Firefox" ))
+        $item = $folder.Parsename('firefox.exe')
+        $item.invokeverb('taskbarpin');
     
-            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Opera" ))
-            $item = $folder.Parsename('launcher.exe')
-            $item.invokeverb('taskbarpin');
+        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Opera" ))
+        $item = $folder.Parsename('launcher.exe')
+        $item.invokeverb('taskbarpin');
  
-            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles} "Internet Explorer" ))
-            $item = $folder.Parsename("iexplore.exe")
-            $item.invokeverb('taskbarpin');
+        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles} "Internet Explorer" ))
+        $item = $folder.Parsename("iexplore.exe")
+        $item.invokeverb('taskbarpin');
 
-            $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio 14.0\Common7\IDE" ))
-            $item = $folder.Parsename('devenv.exe')
-            $item.invokeverb('taskbarpin');
+        $folder = $shell.Namespace((Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio 14.0\Common7\IDE" ))
+        $item = $folder.Parsename('devenv.exe')
+        $item.invokeverb('taskbarpin');
 
-            $shell=$null
-        }
-        else
+        $shell=$null
         
-        {
-            Pin-ToTaskbar "Google Chrome"
-            Pin-ToTaskbar "Mozilla Firefox"
-            Pin-ToTaskbar "Opera"
-            Pin-ToTaskbar "Visual Studio 2015"
-        }
 
         Set-Background "restore"
     
