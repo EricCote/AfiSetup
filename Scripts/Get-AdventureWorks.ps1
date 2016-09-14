@@ -147,21 +147,26 @@ function Enable-AutomaticDownloadEdge
 if (Get-ServerName -neq '')
 {
 
-    if (Get-ServerName -eq '(localdb)\MSSQLLocalDB')
+    if ((Get-ServerName) -eq '(localdb)\MSSQLLocalDB')
     {
-        #start localDB
+        
         & "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" start 
         & "C:\Program Files\Microsoft SQL Server\130\Tools\Binn\SqlLocalDB.exe" info mssqllocaldb
-
+       
     }
-
 
 
 
     #get codeplex-Version
     $codeplexVersion= Get-CodeplexVersion
 
+   
 
+    New-Item -type directory -path C:\aw
+    $Acl = Get-Acl "C:\aw"
+    $Ar = New-Object  system.security.accesscontrol.filesystemaccessrule("BUILTIN\Users","FullControl","ContainerInherit,ObjectInherit","None","Allow")
+    $Acl.AddAccessRule($ar)
+    Set-Acl "C:\aw" $Acl
 
     ###------------------------------------------------------
 
@@ -320,3 +325,12 @@ else
     "No SQL Server detected!"
 }
 
+if ($uninstall -eq $true)
+{
+    run-sql "DROP DATABASE WideWorldImportersDW;"
+    run-sql "DROP DATABASE WideWorldImporters;"
+    run-sql "DROP DATABASE AdventureWorksLT2012;"
+    run-sql "DROP DATABASE AdventureWorksDW2014;"
+    run-sql "DROP DATABASE AdventureWorks2014;"
+
+}
