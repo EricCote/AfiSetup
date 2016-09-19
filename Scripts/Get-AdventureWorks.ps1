@@ -16,7 +16,7 @@ function detect-localdb
 function Get-ServerName
 {
     $svr=""
-    if((Get-ItemPropertyValue -ErrorAction Ignore "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL\" "MSSQLSERVER").Length -gt  0)
+    if((Get-ItemProperty -ErrorAction Ignore "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL\" ).MSSQLSERVER.Length -gt  0)
     { $svr="." }
     elseif  ((Get-childItem -ErrorAction Ignore -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server Local DB\Installed Versions\").Length -gt 0) 
     { $svr="(localdb)\MSSQLLocalDB" }

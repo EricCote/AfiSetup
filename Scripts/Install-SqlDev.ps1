@@ -25,6 +25,10 @@ if (-Not (Test-Path $SqlDev)) {
 
 $drv=((Mount-DiskImage $SqlDev -PassThru  | Get-Volume).DriveLetter + ':\')
 
+
+if ($false)
+{
+
 & ($drv + 'setup.exe') /qs `
                        /Action=install `
                        /IAcceptSqlServerLicenseTerms `
@@ -34,6 +38,42 @@ $drv=((Mount-DiskImage $SqlDev -PassThru  | Get-Volume).DriveLetter + ':\')
                        /SqlSysAdminAccounts="win10b\afi" `
                        /AgtSvcAccount="NT SERVICE\SQLSERVERAGENT" `
                        /SqlSvcInstantFileInit="True" | Out-Null
+
+}
+
+
+#--------------------------------------------------------
+
+
+$sourcessms="http://go.microsoft.com/fwlink/?LinkID=824938"
+$ssms= ($dl + "SSMS-setup-enu.exe")
+
+if (-Not (Test-Path $ssms)) {
+   Download-File $sourcessms $ssms
+}
+
+& ($ssms) /install /passive | Out-Null
+
+
+#--------------------------------------------------------
+
+
+$sourceSsdt="https://go.microsoft.com/fwlink/?LinkID=824659&clcid=0x409"
+$ssdt= ($dl + "SSDTSetup.exe")
+
+if (-Not (Test-Path $ssdt)) {
+   Download-File $sourceSsdt $ssdt
+}
+
+& ($ssdt) installall=1 /passive | Out-Null
+
+
+
+
+
+
+
+
 
 if ($false)
 {
