@@ -26,8 +26,10 @@ if (-Not (Test-Path $SqlDev)) {
 $drv=((Mount-DiskImage $SqlDev -PassThru  | Get-Volume).DriveLetter + ':\')
 
 
-if ($false)
+if ($true)
 {
+
+$user = $(whoami)
 
 & ($drv + 'setup.exe') /qs `
                        /Action=install `
@@ -35,7 +37,7 @@ if ($false)
                        /Features=sql `
                        /InstanceName=MSSQLSERVER `
                        /SqlSvcAccount="NT SERVICE\MSSQLSERVER" `
-                       /SqlSysAdminAccounts="win10b\afi" `
+                       /SqlSysAdminAccounts="$user" `
                        /AgtSvcAccount="NT SERVICE\SQLSERVERAGENT" `
                        /SqlSvcInstantFileInit="True" | Out-Null
 
@@ -75,6 +77,9 @@ if (-Not (Test-Path $ssdt)) {
 
 
 
+
+
+
 if ($false)
 {
 & ($drv + 'setup.exe') /qs `
@@ -82,9 +87,56 @@ if ($false)
                        /IAcceptSqlServerLicenseTerms `
                        /Features=SQL,AS,RS,IS,DQC,MDS,SQL_SHARED_MR,Tools `
                        /InstanceName=MSSQLSERVER | Out-Null
- }               
+
+$ssms= ($dl + "SSMS-setup-enu.exe")
+& ($ssms) /uninstall /passive | Out-Null
+
+$ssdt= ($dl + "SSDTSetup.exe")
+& ($ssdt) /uninstall /passive | Out-Null
 
 
+
+(Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*) | `
+ Select-Object DisplayName, UninstallString | `
+ ? DisplayName -like "*sql server*" | `
+ % -Process { $items = ($_.UninstallString.split(" ",2)); 
+                        $items[1]= $items[1].Replace("/I","/x")  ;   
+                        & ($items[0]) $items[1] /passive | Out-Null; }
+
+ 
+(Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*) | `
+ Select-Object DisplayName, UninstallString | `
+ Where-Object DisplayName -like "*sql server*" | `
+ % -Process { $items = ($_.UninstallString.split(" ",2)); 
+                        $items[1]= $items[1].Replace("/I","/x")  ;   
+                        & ($items[0]) $items[1] /passive | Out-Null; }
+
+
+ 
+ 
+(Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*) | `
+ Select-Object DisplayName, UninstallString | `
+ ? DisplayName -like "Microsoft Visual C++ 2010*Redistributable*" | `
+ % -Process {  $unstr=$_.UninstallString.Replace("\Package Cache\","\Package_Cache\" ).Replace("  "," ") ;
+               $items = ($unstr.split(" ",2));
+                        $items[0]= $items[0].Replace("\Package_Cache\","\Package Cache\" ).Replace("`"", "") ;
+                        $items[1]= $items[1].Replace("/I","/x"); 
+                        & ($items[0]) $items[1] /passive| Out-Null; 
+                        }
+ 
+ (Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*) | `
+ Select-Object DisplayName, UninstallString | `
+ ? DisplayName -like "Microsoft Visual C++ 2010*Redistributable*" | `
+ % -Process {  $unstr=$_.UninstallString.Replace("\Package Cache\","\Package_Cache\" ).Replace("  "," ") ;
+               $items = ($unstr.split(" ",2));
+                        $items[0]= $items[0].Replace("\Package_Cache\","\Package Cache\" ).Replace("`"", "") ;
+                        $items[1]= $items[1].Replace("/I","/x"); 
+                        & ($items[0]) $items[1] /passive| Out-Null; 
+                        }
+                
+
+
+ }
 
 #Start-Process  "msiexec"  -argumentlist "/passive /i ""$SqlLocalDb"" IACCEPTSQLLOCALDBLICENSETERMS=YES" -Wait 
 #Start-Process  "msiexec"  -argumentlist "/passive /i ""$odbc"" IACCEPTMSODBCSQLLICENSETERMS=YES" -Wait 
